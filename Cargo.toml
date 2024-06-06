@@ -7,3 +7,8 @@ edition = "2021"
 
 [dependencies]
 nannou = "0.19.0"
+rodio = "0.18.0"
+rand = "0.8"
+
+[lib]
+path = "src/sound_manager/audio_mod.rs"
