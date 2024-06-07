@@ -20,3 +20,27 @@ impl AEventHandler for KeyboardEventHandler {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nannou::event::{WindowEvent, Key};
+
+    struct MockSender;
+    impl ISender for MockSender {
+        fn send_event(&self, event: &WindowEvent) {
+            match event {
+                WindowEvent::KeyPressed(key) => assert_eq!(*key, Key::A),
+                _ => panic!("Unexpected event type"),
+            }
+        }
+    }
+
+    #[test]
+    fn test_handle_key_pressed() {
+        let sender = Box::new(MockSender);
+        let handler = KeyboardEventHandler::new(sender);
+        let key_event = WindowEvent::KeyPressed(Key::A);
+        handler.handle_event(&key_event);
+    }
+}
