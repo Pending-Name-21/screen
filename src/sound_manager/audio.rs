@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_play() {
         let audio = Audio::new();
-        let path = "src/sound_manager/sounds/guitar.mp3";
+        let path = "assets/sounds/guitar.mp3";
         let duration = 1;
         let volume = 0.5;
         audio.play(path, duration, volume);
@@ -101,14 +101,14 @@ mod tests {
 
     #[test]
     fn test_simple() {
-        let path = "src/sound_manager/sounds/guitar.mp3";
+        let path = "assets/sounds/guitar.mp3";
         Audio::play_simple(path);
     }
 
     #[test]
     fn test_playlist() {
         let audio = Audio::new();
-        let paths = vec!["src/sound_manager/sounds/guitar.mp3".to_string(), "src/sound_manager/sounds/thunder.mp3".to_string()];
+        let paths = vec!["assets/sounds/guitar.mp3".to_string(), "assets/sounds/thunder.mp3".to_string()];
         audio.play_playlist(paths, false, false, 0.5);
         std::thread::sleep(Duration::from_secs(10));
     }
