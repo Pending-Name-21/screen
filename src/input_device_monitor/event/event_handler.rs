@@ -1,25 +1,17 @@
+use std::sync::{Arc, Mutex};
 use nannou::event::WindowEvent;
-use crate::input_device_monitor::sender::ISender;
+use crate::input_device_monitor::sender::IEventSender;
 
 pub trait AEventHandler {
     fn handle_event(&self, event: &WindowEvent);
 }
 
-pub struct KeyboardEventHandler {
-    pub sender: Box<dyn ISender>,
+pub struct EventHandler {
+    pub sender: Arc<Mutex<dyn IEventSender + Send>>,
 }
 
-impl KeyboardEventHandler {
-    pub fn new(sender: Box<dyn ISender>) -> Self {
+impl EventHandler {
+    pub fn new(sender: Arc<Mutex<dyn IEventSender + Send>>) -> Self {
         Self { sender }
-    }
-}
-
-impl AEventHandler for KeyboardEventHandler {
-    fn handle_event(&self, event: &WindowEvent) {
-        if let WindowEvent::KeyPressed(key) = event {
-            println!("Key pressed: {:?}", key);
-            self.sender.send_event(event);
-        }
     }
 }
