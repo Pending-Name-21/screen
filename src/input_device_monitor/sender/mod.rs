@@ -1,3 +1,4 @@
 pub mod sender;
+pub mod concrete;
 
-pub use sender::{ISender, SocketClientSender};
+pub use sender::IEventSender;
