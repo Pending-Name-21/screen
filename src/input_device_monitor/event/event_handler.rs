@@ -1,5 +1,5 @@
 use nannou::event::WindowEvent;
-use crate::sender::ISender;
+use crate::input_device_monitor::sender::ISender;
 
 pub trait AEventHandler {
     fn handle_event(&self, event: &WindowEvent);

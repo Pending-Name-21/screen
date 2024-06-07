@@ -11,4 +11,4 @@ rodio = "0.18.0"
 rand = "0.8"
 
 [lib]
-path = "src/sound_manager/audio_mod.rs"
+path = "src/lib.rs"

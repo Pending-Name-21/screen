@@ -1,6 +1,6 @@
 use nannou::event::WindowEvent;
-use crate::sender::ISender;
-use crate::event::AEventHandler;
+use crate::input_device_monitor::sender::ISender;
+use crate::input_device_monitor::event::AEventHandler;
 
 pub struct KeyboardEventHandler {
     sender: Box<dyn ISender>,

@@ -1,6 +1,6 @@
 use nannou::event::WindowEvent;
-use crate::event::{AEventHandler, KeyboardEventHandler};
-use crate::sender::{ISender, SocketClientSender};
+use crate::input_device_monitor::event::{AEventHandler, KeyboardEventHandler};
+use crate::input_device_monitor::sender::{ISender, SocketClientSender};
 
 pub struct AppHandler {
     pub event_handlers: Vec<Box<dyn AEventHandler>>,
