@@ -32,7 +32,6 @@ impl Audio {
                 let source = Decoder::new(file).unwrap();
                 let source = source.amplify(volume);
 
-                println!("Playing audio: {}", audio_path.display());
                 let sink = Sink::try_new(&stream_handle).unwrap();
                 sink.append(source);
 
@@ -59,7 +58,6 @@ impl Audio {
                     let source = Decoder::new(file).unwrap();
                     let source = source.amplify(volume);
 
-                    println!("Playing audio: {}", path);
                     let sink = Sink::try_new(&stream_handle).unwrap();
                     sink.append(source);
                     sink.sleep_until_end();
