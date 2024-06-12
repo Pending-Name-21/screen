@@ -1,6 +1,5 @@
 // This main file need to be updated on UI manager US
 use nannou::prelude::*;
-use screen::gui::sprite::sprite::{self, Sprite};
 use screen::gui::sprite::sprite_manager::SpriteList;
 use screen::input_device_monitor::app::AppHandler;
 
