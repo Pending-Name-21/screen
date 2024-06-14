@@ -2,8 +2,13 @@
 use nannou::prelude::*;
 use screen::gui::sprite::sprite_manager::SpriteList;
 use screen::input_device_monitor::app::AppHandler;
+use screen::socket_server::socket_server::run_server;
+use std::thread;
 
 fn main() {
+    thread::spawn(|| {
+        run_server();
+    });
     nannou::app(model).update(update).view(view).run();
 }
 
