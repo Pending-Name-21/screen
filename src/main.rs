@@ -1,18 +1,33 @@
-// This main file need to be updated on UI manager US
 use nannou::prelude::*;
 use screen::gui::sprite::sprite_manager::SpriteList;
 use screen::input_device_monitor::app::AppHandler;
-use screen::socket_server::socket_server::run_server;
-use std::thread;
+use screen::socket_server::conversion::{convert_frame_to_gui_sprite, play_frame_sound};
+use screen::socket_server::frame::Frame as ScreenFrame;
+use screen::socket_server::server::run_server;
+use screen::sound_manager::audio::Audio;
+use crossbeam_channel::{unbounded, Receiver};
+use rayon::ThreadPoolBuilder;
+use std::sync::Arc;
 
 fn main() {
-    thread::spawn(|| {
-        run_server();
-    });
     nannou::app(model).update(update).view(view).run();
 }
 
+struct Model {
+    app_handler: AppHandler,
+    sprite_list: SpriteList,
+    receiver: Receiver<ScreenFrame>,
+    audio: Arc<Audio>,
+    thread_pool: rayon::ThreadPool,
+}
+
 fn model(app: &App) -> Model {
+    let (tx, rx) = unbounded();
+
+    std::thread::spawn(move || {
+        run_server(tx);
+    });
+
     let _window_id = app
         .new_window()
         .size(800, 600)
@@ -24,27 +39,54 @@ fn model(app: &App) -> Model {
     let mut app_handler = AppHandler::new();
     app_handler.init();
 
-    let mut sprite_list = SpriteList::new();
-    sprite_list.add_sprite(app, "assets/images/pacman.jpeg","pacman1", 50.0, 50.0);
-    sprite_list.add_sprite_dim(app, "assets/images/pacman.jpeg","pacman2", 100.0, 100.0, 50.0, 50.0);
+    let sprite_list = SpriteList::new();
+    let audio = Arc::new(Audio::new());
 
+    let thread_pool = ThreadPoolBuilder::new().num_threads(4).build().unwrap();
 
-    Model { app_handler, sprite_list }  
+    Model {
+        app_handler,
+        sprite_list,
+        receiver: rx,
+        audio,
+        thread_pool,
+    }
 }
 
-fn update(_app: &App, _model: &mut Model, _update: Update) {
+fn update(app: &App, model: &mut Model, _update: Update) {
+    while let Ok(frame) = model.receiver.try_recv() {
+        if let Some(ref frame_sprite) = frame.sprite {
+            if let Err(e) = convert_frame_to_gui_sprite(app, frame_sprite).and_then(|_gui_sprite| {
+                model.sprite_list.add_sprite(
+                    app,
+                    &frame_sprite.file_path,
+                    "received_sprite",
+                    frame_sprite.position.x as f32,
+                    frame_sprite.position.y as f32,
+                );
+                Ok(())
+            }) {
+                eprintln!("{}", e);
+            }
+        }
 
-    _model.sprite_list.update_sprite("pacman1", 200.0, 200.0, Some(75.0), Some(75.0));
-    _model.sprite_list.update_sprite("pacman1", 300.0, 300.0, None, None);
-
-    _model.sprite_list.remove_sprite("pacman2");
+        if let Some(ref frame_sound) = frame.sound {
+            let audio = Arc::clone(&model.audio);
+            let frame_sound = frame_sound.clone();
+            model.thread_pool.spawn(move || {
+                if let Err(e) = play_frame_sound(&frame_sound, &audio) {
+                    eprintln!("{}", e);
+                }
+            });
+        }
+    }
 }
-
-fn window_event(_app: &App, model: &mut Model, event: WindowEvent) {
+fn window_event(app: &App, model: &mut Model, event: WindowEvent) {
+    let _ = app;
     model.app_handler.handle_window_event(&event);
 }
 
-fn view(app: &App, model: &Model, frame: Frame) {
+fn view(app: &App, model: &Model, frame: nannou::Frame) {
     let draw = app.draw();
     frame.clear(DIMGRAY);
 
@@ -60,11 +102,4 @@ fn view(app: &App, model: &Model, frame: Frame) {
     }
 
     draw.to_frame(app, &frame).unwrap();
-}
-
-
-
-struct Model {
-    app_handler: AppHandler,
-    sprite_list: SpriteList,
 }
