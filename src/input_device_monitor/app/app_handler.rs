@@ -3,9 +3,9 @@ use std::sync::Mutex;
 
 use nannou::event::WindowEvent;
 
-use crate::input_device_monitor::event::concrete::KeyboardEventHandler;
-use crate::input_device_monitor::event::concrete::MouseEventHandler;
-use crate::input_device_monitor::event::AEventHandler;
+use crate::input_device_monitor::event_handler::concrete::KeyboardEventHandler;
+use crate::input_device_monitor::event_handler::concrete::MouseEventHandler;
+use crate::input_device_monitor::event_handler::AEventHandler;
 use crate::input_device_monitor::sender::concrete::SocketClientSender;
 use crate::input_device_monitor::sender::IEventSender;
 
@@ -22,7 +22,7 @@ impl AppHandler {
 
     pub fn init(&mut self) {
         let sender: Arc<Mutex<dyn IEventSender + Send>> 
-            = Arc::new(Mutex::new(SocketClientSender));
+            = Arc::new(Mutex::new(SocketClientSender::new().unwrap()));
 
         let keyboard_handler: Box<dyn AEventHandler> 
             = Box::new(KeyboardEventHandler::new(sender.clone()));
