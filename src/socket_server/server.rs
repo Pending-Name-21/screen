@@ -1,15 +1,19 @@
 use crate::socket_server::frame::Frame;
 use crossbeam_channel::Sender;
 use std::io::BufReader;
-use std::net::TcpListener;  
+use std::os::unix::net::UnixListener;
 use std::thread;
 use dotenv::dotenv;
 use std::env;
+use std::fs::remove_file;
 
 pub fn run_server(tx: Sender<Frame>) {
     dotenv().ok();
-    let address: String = env::var("ADDRESS").expect("ADDRESS must be set");
-    let listener = TcpListener::bind(address).unwrap();
+    let socket_path: String = env::var("ADDRESS").expect("ADDRESS must be set");
+
+    let _ = remove_file(&socket_path);
+
+    let listener = UnixListener::bind(&socket_path).expect("Failed to bind socket");
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
