@@ -7,6 +7,7 @@ use crate::input_device_monitor::event_handler::concrete::KeyboardEventHandler;
 use crate::input_device_monitor::event_handler::concrete::MouseEventHandler;
 use crate::input_device_monitor::event_handler::AEventHandler;
 use crate::input_device_monitor::sender::concrete::SocketClientSender;
+use crate::input_device_monitor::sender::concrete::SOCKET_SERVER_PATH;
 use crate::input_device_monitor::sender::IEventSender;
 
 pub struct AppHandler {
@@ -21,14 +22,15 @@ impl AppHandler {
     }
 
     pub fn init(&mut self) {
-        let sender: Arc<Mutex<dyn IEventSender + Send>> 
-            = Arc::new(Mutex::new(SocketClientSender::new().unwrap()));
+        let sender: Arc<Mutex<dyn IEventSender + Send>> = Arc::new(Mutex::new(
+            SocketClientSender::new(SOCKET_SERVER_PATH).unwrap(),
+        ));
 
-        let keyboard_handler: Box<dyn AEventHandler> 
-            = Box::new(KeyboardEventHandler::new(sender.clone()));
-        let mouse_handler: Box<dyn AEventHandler> 
-            = Box::new(MouseEventHandler::new(sender.clone()));
-            
+        let keyboard_handler: Box<dyn AEventHandler> =
+            Box::new(KeyboardEventHandler::new(sender.clone()));
+        let mouse_handler: Box<dyn AEventHandler> =
+            Box::new(MouseEventHandler::new(sender.clone()));
+
         self.event_handlers.push(keyboard_handler);
         self.event_handlers.push(mouse_handler);
     }
