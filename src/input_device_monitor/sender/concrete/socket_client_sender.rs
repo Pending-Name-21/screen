@@ -1,3 +1,4 @@
+use colored::Colorize;
 use nannou::event::WindowEvent;
 use serde_json;
 use std::io::prelude::*;
@@ -14,8 +15,17 @@ pub struct SocketClientSender {
 
 impl SocketClientSender {
     pub fn new(socket_path: &str) -> std::io::Result<Self> {
-        let stream = UnixStream::connect(socket_path)?;
-        Ok(Self { stream })
+        match UnixStream::connect(socket_path) {
+            Ok(stream) => Ok(Self { stream }),
+            Err(err) => {
+                println!(
+                    "{} {}\n",
+                    "Failed to connect to the socket server:".bold().red(),
+                    err
+                );
+                Err(err)
+            }
+        }
     }
 }
 
@@ -24,7 +34,7 @@ impl IEventSender for SocketClientSender {
         let my_event: MyWindowEvent = event.clone().into();
         let event_json = serde_json::to_string(&my_event).unwrap();
         writeln!(self.stream, "{}", event_json).unwrap();
-        println!("✓ Sent : {}", event_json);
+        println!("{} : {}", "✓ Sent".bold().green(), event_json);
     }
 }
 
