@@ -2,11 +2,12 @@ use colored::Colorize;
 use dotenv_codegen::dotenv;
 use nannou::event::WindowEvent;
 use serde_json;
-use std::io::prelude::*;
+use std::io::Write;
 use std::os::unix::net::UnixStream;
 
 use crate::input_device_monitor::my_event::MyWindowEvent;
 use crate::input_device_monitor::sender::IEventSender;
+use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
 pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
 
@@ -19,10 +20,15 @@ impl SocketClientSender {
         match UnixStream::connect(socket_path) {
             Ok(stream) => Ok(Self { stream }),
             Err(err) => {
-                println!(
-                    "{} {}\n",
-                    "Failed to connect to the socket server:".bold().red(),
-                    err
+                run_in_terminal_or_not(
+                    || {
+                        println!(
+                            "{} {}",
+                            "Failed to connect to the socket server:".bold().red(),
+                            err
+                        )
+                    },
+                    || println!("Failed to connect to the socket server: {}", err),
                 );
                 Err(err)
             }
@@ -35,7 +41,9 @@ impl IEventSender for SocketClientSender {
         let my_event: MyWindowEvent = event.clone().into();
         let event_json = serde_json::to_string(&my_event).unwrap();
         writeln!(self.stream, "{}", event_json).unwrap();
-        println!("{} : {}", "✓ Sent".bold().green(), event_json);
+        run_in_terminal(|| {
+            println!("{} : {}", "✓ Sent".bold().green(), event_json);
+        });
     }
 }
 
