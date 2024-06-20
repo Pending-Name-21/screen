@@ -3,6 +3,8 @@ use nannou::prelude::*;
 use screen::gui::sprite::sprite_manager::SpriteList;
 use screen::input_device_monitor::app::AppHandler;
 
+extern crate dotenv_codegen;
+
 fn main() {
     nannou::app(model).update(update).view(view).run();
 }
@@ -20,17 +22,30 @@ fn model(app: &App) -> Model {
     app_handler.init();
 
     let mut sprite_list = SpriteList::new();
-    sprite_list.add_sprite(app, "assets/images/pacman.jpeg","pacman1", 50.0, 50.0);
-    sprite_list.add_sprite_dim(app, "assets/images/pacman.jpeg","pacman2", 100.0, 100.0, 50.0, 50.0);
+    sprite_list.add_sprite(app, "assets/images/pacman.jpeg", "pacman1", 50.0, 50.0);
+    sprite_list.add_sprite_dim(
+        app,
+        "assets/images/pacman.jpeg",
+        "pacman2",
+        100.0,
+        100.0,
+        50.0,
+        50.0,
+    );
 
-
-    Model { app_handler, sprite_list }  
+    Model {
+        app_handler,
+        sprite_list,
+    }
 }
 
 fn update(_app: &App, _model: &mut Model, _update: Update) {
-
-    _model.sprite_list.update_sprite("pacman1", 200.0, 200.0, Some(75.0), Some(75.0));
-    _model.sprite_list.update_sprite("pacman1", 300.0, 300.0, None, None);
+    _model
+        .sprite_list
+        .update_sprite("pacman1", 200.0, 200.0, Some(75.0), Some(75.0));
+    _model
+        .sprite_list
+        .update_sprite("pacman1", 300.0, 300.0, None, None);
 
     _model.sprite_list.remove_sprite("pacman2");
 }
@@ -49,15 +64,11 @@ fn view(app: &App, model: &Model, frame: Frame) {
         let image_size = texture.size();
         let (width, height) = (image_size[0] as f32, image_size[1] as f32);
         let dimensions = sprite.dimensions.unwrap_or_else(|| vec2(width, height));
-        draw.texture(texture)
-            .xy(position)
-            .wh(dimensions);
+        draw.texture(texture).xy(position).wh(dimensions);
     }
 
     draw.to_frame(app, &frame).unwrap();
 }
-
-
 
 struct Model {
     app_handler: AppHandler,
