@@ -1,4 +1,5 @@
 use colored::Colorize;
+use dotenv_codegen::dotenv;
 use nannou::event::WindowEvent;
 use serde_json;
 use std::io::prelude::*;
@@ -7,7 +8,7 @@ use std::os::unix::net::UnixStream;
 use crate::input_device_monitor::my_event::MyWindowEvent;
 use crate::input_device_monitor::sender::IEventSender;
 
-pub const SOCKET_SERVER_PATH: &str = "/tmp/events-socket.sock";
+pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
 
 pub struct SocketClientSender {
     stream: UnixStream,
