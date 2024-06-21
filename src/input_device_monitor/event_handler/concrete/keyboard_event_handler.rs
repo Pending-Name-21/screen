@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 use nannou::event::WindowEvent;
-use crate::input_device_monitor::event::AEventHandler;
+use crate::input_device_monitor::event_handler::AEventHandler;
 use crate::input_device_monitor::sender::IEventSender;
 
 pub struct KeyboardEventHandler {
@@ -16,7 +16,7 @@ impl KeyboardEventHandler {
 impl AEventHandler for KeyboardEventHandler {
     fn handle_event(&self, event: &WindowEvent) {
         if let WindowEvent::KeyPressed(_) = event {
-            let sender = self.sender.lock().unwrap();
+            let mut sender = self.sender.lock().unwrap();
             sender.send_event(event);
         }
     }
@@ -30,7 +30,7 @@ mod tests {
 
     struct MockSender;
     impl IEventSender for MockSender {
-        fn send_event(&self, event: &WindowEvent) {
+        fn send_event(&mut self, event: &WindowEvent) {
             match event {
                 WindowEvent::KeyPressed(key) => assert_eq!(*key, Key::A),
                 _ => panic!("Unexpected event type"),

@@ -1,7 +1,7 @@
 use nannou::event::WindowEvent;
 use std::sync::{Arc, Mutex};
 
-use crate::input_device_monitor::{event::AEventHandler, sender::IEventSender};
+use crate::input_device_monitor::{event_handler::AEventHandler, sender::IEventSender};
 
 pub struct MouseEventHandler {
     pub sender: Arc<Mutex<dyn IEventSender + Send>>,
@@ -21,7 +21,7 @@ impl AEventHandler for MouseEventHandler {
             | WindowEvent::MouseReleased(_)
             | WindowEvent::MouseEntered
             | WindowEvent::MouseExited => {
-                let sender = self.sender.lock().unwrap();
+                let mut sender = self.sender.lock().unwrap();
                 sender.send_event(event);
             }
             _ => {}
@@ -40,7 +40,7 @@ mod tests {
     struct MockMouseEvent;
 
     impl IEventSender for MockMouseEvent {
-        fn send_event(&self, event: &WindowEvent) {
+        fn send_event(&mut self, event: &WindowEvent) {
             match event {
                 WindowEvent::MouseMoved(event) => assert_eq!(*event, Vec2::new(0.0, 0.0)),
                 WindowEvent::MousePressed(event) => assert_eq!(*event, MouseButton::Left),

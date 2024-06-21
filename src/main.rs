@@ -9,6 +9,8 @@ use std::sync::Arc;
 use screen::socket_server::receiver::FrameReceiver;
 use screen::socket_server::queue_manager::process_frame;
 
+extern crate dotenv_codegen;
+
 fn main() {
     nannou::app(model).update(update).view(view).run();
 }
@@ -77,9 +79,7 @@ fn view(app: &App, model: &Model, frame: nannou::Frame) {
         let image_size = texture.size();
         let (width, height) = (image_size[0] as f32, image_size[1] as f32);
         let dimensions = sprite.dimensions.unwrap_or_else(|| vec2(width, height));
-        draw.texture(texture)
-            .xy(position)
-            .wh(dimensions);
+        draw.texture(texture).xy(position).wh(dimensions);
     }
 
     draw.to_frame(app, &frame).unwrap();
