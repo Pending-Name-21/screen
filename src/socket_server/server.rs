@@ -24,27 +24,15 @@ pub fn run_server(tx: Sender<Frame>, thread_pool: Arc<ThreadPool>) {
                 pool.spawn(move || {
                     let mut reader = BufReader::new(stream);
                     let mut buffer = Vec::new();
-                    match reader.read_to_end(&mut buffer) {
-                        Ok(_) => {
-                            match serde_json::from_slice::<Frame>(&buffer) {
-                                Ok(frame) => {
-                                    if tx.send(frame).is_err() {
-                                        eprintln!("Failed to send frame to channel");
-                                    }
-                                }
-                                Err(err) => {
-                                    eprintln!("Failed to deserialize frame: {}", err);
-                                }
-                            }
-                        }
-                        Err(err) => {
-                            eprintln!("Failed to read from stream: {}", err);
+                    if reader.read_to_end(&mut buffer).is_ok() {
+                        if let Ok(frame) = serde_json::from_slice(&buffer) {
+                            let _ = tx.send(frame);
                         }
                     }
                 });
             }
-            Err(err) => {
-                eprintln!("Connection failed: {}", err);
+            Err(_) => {
+                eprintln!("Connection failed");
             }
         }
     }
