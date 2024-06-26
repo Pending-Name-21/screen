@@ -25,7 +25,7 @@ struct Model {
 
 fn model(app: &App) -> Model {
     let (tx, rx) = unbounded();
-    let thread_pool = Arc::new(ThreadPoolBuilder::new().num_threads(4).build().unwrap());
+    let thread_pool: Arc<rayon::ThreadPool> = Arc::new(ThreadPoolBuilder::new().num_threads(8).build().unwrap());
 
     let server_thread_pool = Arc::clone(&thread_pool);
     std::thread::spawn(move || {

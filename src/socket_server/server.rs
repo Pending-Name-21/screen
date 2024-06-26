@@ -1,5 +1,3 @@
-use crate::socket_server::frame::Frame;
-use crate::socket_server::deserialization::deserialize_frame;
 use crossbeam_channel::Sender;
 use std::io::BufReader;
 use std::os::unix::net::UnixListener;
@@ -10,9 +8,9 @@ use std::fs::remove_file;
 use std::io::Read;
 use std::sync::Arc;
 
-pub fn run_server(tx: Sender<Frame>, thread_pool: Arc<ThreadPool>) {
+pub fn run_server(tx: Sender<Vec<u8>>, thread_pool: Arc<ThreadPool>) {
     dotenv().ok();
-    let socket_path: String = env::var("ADDRESS").expect("ADDRESS must be set");
+    let socket_path: String = env::var("SCREEN_SOCKET_SERVER").expect("ADDRESS must be set");
 
     let _ = remove_file(&socket_path);
 
@@ -32,14 +30,7 @@ pub fn run_server(tx: Sender<Frame>, thread_pool: Arc<ThreadPool>) {
                             }
                             Ok(n) => {
                                 buffer.truncate(n); 
-                                match deserialize_frame(&buffer) {
-                                    Ok(flat_frame) => {
-                                        let _ = tx.send(flat_frame);
-                                    }
-                                    Err(e) => {
-                                        eprintln!("Failed to parse frame: {:?}", e);
-                                    }
-                                }
+                                let _ = tx.send(buffer.clone());
                             }
                             Err(e) => {
                                 eprintln!("Failed to read from socket: {:?}", e);
