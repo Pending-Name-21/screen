@@ -23,7 +23,7 @@ impl AppHandler {
 
     pub fn init(&mut self) {
         let sender: Arc<Mutex<dyn IEventSender + Send>> = Arc::new(Mutex::new(
-            SocketClientSender::new(SOCKET_SERVER_PATH).unwrap(),
+            SocketClientSender::new("/tmp/test-events-socket.sock").unwrap(),
         ));
 
         let keyboard_handler: Box<dyn AEventHandler> =

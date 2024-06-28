@@ -1,11 +1,13 @@
 use colored::Colorize;
 use dotenv_codegen::dotenv;
 use nannou::event::WindowEvent;
-use serde_json;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
-use crate::input_device_monitor::my_event::MyWindowEvent;
+use crate::input_device_monitor::my_event::{get_last_mouse_point, MyWindowEvent};
+use crate::input_device_monitor::sender::concrete::{
+    Event, EventArgs, Keyboard, KeyboardArgs, Mouse, MouseArgs, Position, PositionArgs,
+};
 use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
@@ -38,12 +40,125 @@ impl SocketClientSender {
 
 impl IEventSender for SocketClientSender {
     fn send_event(&mut self, event: &WindowEvent) {
-        let my_event: MyWindowEvent = event.clone().into();
-        let event_json = serde_json::to_string(&my_event).unwrap();
-        writeln!(self.stream, "{}", event_json).unwrap();
+        let mut builder = flatbuffers::FlatBufferBuilder::with_capacity(1024);
+        let mut type_event = "";
+        match event {
+            WindowEvent::KeyPressed(key) => {
+                type_event = "key pressed";
+                let event_state = builder.create_string("KeyPressed");
+                let key_name = builder.create_string(&format!("{:?}", key));
+
+                let keyboard_event = Keyboard::create(
+                    &mut builder,
+                    &KeyboardArgs {
+                        type_: Some(event_state),
+                        key: Some(key_name),
+                    },
+                );
+
+                let event = Event::create(
+                    &mut builder,
+                    &EventArgs {
+                        keyboard: Some(keyboard_event),
+                        mouse: None,
+                    },
+                );
+
+                builder.finish(event, None);
+            },
+            WindowEvent::KeyReleased(key) => {
+                type_event = "key released";
+
+                let event_state = builder.create_string("KeyReleased");
+                let key_name = builder.create_string(&format!("{:?}", key));
+
+                let keyboard_event = Keyboard::create(
+                    &mut builder,
+                    &KeyboardArgs {
+                        type_: Some(event_state),
+                        key: Some(key_name),
+                    },
+                );
+
+                let event = Event::create(
+                    &mut builder,
+                    &EventArgs {
+                        keyboard: Some(keyboard_event),
+                        mouse: None,
+                    },
+                );
+
+                builder.finish(event, None);
+            },
+            WindowEvent::MousePressed(button) => {
+                type_event = "mouse pressed";
+
+                let point = get_last_mouse_point();
+                let x = point.x;
+                let y = point.y;
+                let event_state = builder.create_string("ButtonPressed");
+                let button_name = builder.create_string(&format!("{:?}", button));
+                let position = Position::create(&mut builder, &PositionArgs { x, y });
+
+                let mouse_event = Mouse::create(
+                    &mut builder,
+                    &MouseArgs {
+                        type_: Some(event_state),
+                        button: Some(button_name),
+                        position: Some(position),
+                    },
+                );
+
+                let event = Event::create(
+                    &mut builder,
+                    &EventArgs {
+                        keyboard: None,
+                        mouse: Some(mouse_event),
+                    },
+                );
+
+                builder.finish(event, None);
+            },
+            WindowEvent::MouseReleased(button) => {
+                type_event = "mouse released";
+
+                let point = get_last_mouse_point();
+                let x = point.x;
+                let y = point.y;
+                let event_state = builder.create_string("MouseReleased");
+                let button_name = builder.create_string(&format!("{:?}", button)); // Convert MouseButton enum to string
+
+                let position = Position::create(&mut builder, &PositionArgs { x, y });
+                let mouse_event = Mouse::create(
+                    &mut builder,
+                    &MouseArgs {
+                        type_: Some(event_state),
+                        button: Some(button_name),
+                        position: Some(position),
+                    },
+                );
+
+                let event = Event::create(
+                    &mut builder,
+                    &EventArgs {
+                        keyboard: None,
+                        mouse: Some(mouse_event),
+                    },
+                );
+
+                builder.finish(event, None);
+            },
+            _ => {
+                println!("Unhandled window event: {:?}", event);
+            }
+        }
+
         run_in_terminal(|| {
-            println!("{} : {}", "✓ Sent".bold().green(), event_json);
+            println!("{} : {}", "✓ Sent".bold().green(), type_event);
         });
+
+        let buf = builder.finished_data();
+        self.stream.write_all(buf).unwrap();
     }
 }
 
