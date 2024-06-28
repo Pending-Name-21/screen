@@ -2,7 +2,7 @@ use nannou::event::WindowEvent;
 use std::sync::{Arc, Mutex};
 
 use crate::input_device_monitor::{
-    event_handler::AEventHandler, my_event::update_last_mouse_point, sender::IEventSender,
+    event_handler::AEventHandler, my_event::serializable_clone::update_last_mouse_point, sender::IEventSender
 };
 
 pub struct MouseEventHandler {

@@ -1,4 +1,4 @@
-use crate::input_device_monitor::my_event::MyWindowEvent;
+use crate::input_device_monitor::my_event::serializable_clone::MyWindowEvent;
 use nannou::event::WindowEvent;
 
 impl From<WindowEvent> for MyWindowEvent {

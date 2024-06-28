@@ -1,4 +1,4 @@
-use crate::input_device_monitor::my_event::MyVec2;
+use crate::input_device_monitor::my_event::serializable_clone::MyVec2;
 use nannou::glam::Vec2;
 
 impl From<Vec2> for MyVec2 {

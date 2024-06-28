@@ -1,4 +1,4 @@
-use crate::input_device_monitor::my_event::MyKey;
+use crate::input_device_monitor::my_event::serializable_clone::MyKey;
 use nannou::event::Key;
 
 impl From<Key> for MyKey {

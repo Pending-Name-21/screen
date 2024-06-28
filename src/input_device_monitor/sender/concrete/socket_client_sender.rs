@@ -4,10 +4,10 @@ use nannou::event::WindowEvent;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
-use crate::input_device_monitor::my_event::{get_last_mouse_point, MyWindowEvent};
-use crate::input_device_monitor::sender::concrete::{
+use crate::input_device_monitor::my_event::flatbuffer::{
     Event, EventArgs, Keyboard, KeyboardArgs, Mouse, MouseArgs, Position, PositionArgs,
 };
+use crate::input_device_monitor::my_event::serializable_clone::{get_last_mouse_point, MyWindowEvent};
 use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
@@ -167,7 +167,7 @@ mod tests {
     use nannou::event::Key;
     use tempfile::TempDir;
 
-    use crate::input_device_monitor::my_event::MyKey;
+    use crate::input_device_monitor::my_event::serializable_clone::MyKey;
 
     use super::*;
     use std::io::BufRead;

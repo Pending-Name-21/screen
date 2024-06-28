@@ -1,4 +1,4 @@
-use crate::input_device_monitor::my_event::MyMouseButton;
+use crate::input_device_monitor::my_event::serializable_clone::MyMouseButton;
 use nannou::event::MouseButton;
 
 impl From<MouseButton> for MyMouseButton {
