@@ -4,23 +4,25 @@ use nannou::event::WindowEvent;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
+use crate::input_device_monitor::event_caster::IEventCaster;
 use crate::input_device_monitor::my_event::flatbuffer::{
     Event, EventArgs, Keyboard, KeyboardArgs, Mouse, MouseArgs, Position, PositionArgs,
 };
-use crate::input_device_monitor::my_event::serializable_clone::{get_last_mouse_point, MyWindowEvent};
+use crate::input_device_monitor::my_event::serializable_clone::{
+    get_last_mouse_point, MyWindowEvent,
+};
 use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
 pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
-
 pub struct SocketClientSender {
     stream: UnixStream,
+    caster: Box<dyn IEventCaster + Send>,
 }
-
 impl SocketClientSender {
-    pub fn new(socket_path: &str) -> std::io::Result<Self> {
+    pub fn new(socket_path: &str, caster: Box<dyn IEventCaster>) -> std::io::Result<Self> {
         match UnixStream::connect(socket_path) {
-            Ok(stream) => Ok(Self { stream }),
+            Ok(stream) => Ok(Self { stream, caster }),
             Err(err) => {
                 run_in_terminal_or_not(
                     || {
@@ -39,6 +41,14 @@ impl SocketClientSender {
 }
 
 impl IEventSender for SocketClientSender {
+    fn send_event(&mut self, event: &WindowEvent) {
+        let buf = self.caster.cast_event(event);
+        self.stream.write_all(&buf).unwrap();
+        run_in_terminal(|| {
+            println!("{}", "✓ Sent".bold().green());
+        });
+    }
+    /* 
     fn send_event(&mut self, event: &WindowEvent) {
         let mut builder = flatbuffers::FlatBufferBuilder::with_capacity(1024);
         let mut type_event = "";
@@ -160,6 +170,7 @@ impl IEventSender for SocketClientSender {
         let buf = builder.finished_data();
         self.stream.write_all(buf).unwrap();
     }
+     */
 }
 
 #[cfg(test)]
@@ -167,11 +178,11 @@ mod tests {
     use nannou::event::Key;
     use tempfile::TempDir;
 
+    use crate::input_device_monitor::event_caster::clone_caster::clone_caster::CloneCaster;
     use crate::input_device_monitor::my_event::serializable_clone::MyKey;
 
     use super::*;
-    use std::io::BufRead;
-    use std::io::BufReader;
+    use std::io::Read;
     use std::os::unix::net::UnixListener;
     use std::sync::atomic::AtomicBool;
     use std::sync::atomic::Ordering;
@@ -191,12 +202,19 @@ mod tests {
         let handle = thread::spawn(move || {
             while running_clone.load(Ordering::SeqCst) {
                 match listener.accept() {
-                    Ok((socket, _)) => {
-                        let reader = BufReader::new(socket);
-                        for line in reader.lines() {
-                            let buf = line.unwrap();
-                            let event: MyWindowEvent = serde_json::from_str(&buf).unwrap();
-                            assert_eq!(event, MyWindowEvent::MyKeyPressed(MyKey::MyA));
+                    Ok((mut socket, _)) => {
+                        let mut buf = [0; 1024];
+                        loop {
+                            match socket.read(&mut buf) {
+                                Ok(0) => break,
+                                Ok(n) => {
+                                    let buf_str = String::from_utf8_lossy(&buf[..n]).to_string();
+                                    let event: MyWindowEvent = serde_json::from_str(&buf_str).unwrap();
+                                    assert_eq!(event, MyWindowEvent::MyKeyPressed(MyKey::MyA));
+                                    break;
+                                }
+                                Err(_) => break,
+                            }
                         }
                     }
                     Err(_) => {}
@@ -204,7 +222,8 @@ mod tests {
             }
         });
 
-        let mut client_sender = SocketClientSender::new(socket_path_str).unwrap();
+        let caster = Box::new(CloneCaster);
+        let mut client_sender = SocketClientSender::new(socket_path_str, caster).unwrap();
 
         let test_event = WindowEvent::KeyPressed(Key::A);
         client_sender.send_event(&test_event);
