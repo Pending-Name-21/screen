@@ -1,7 +1,9 @@
 use nannou::event::WindowEvent;
 use std::sync::{Arc, Mutex};
 
-use crate::input_device_monitor::{event_handler::AEventHandler, sender::IEventSender};
+use crate::input_device_monitor::{
+    event_handler::AEventHandler, my_event::update_last_mouse_point, sender::IEventSender,
+};
 
 pub struct MouseEventHandler {
     pub sender: Arc<Mutex<dyn IEventSender + Send>>,
@@ -16,11 +18,10 @@ impl MouseEventHandler {
 impl AEventHandler for MouseEventHandler {
     fn handle_event(&self, event: &WindowEvent) {
         match event {
-            WindowEvent::MouseMoved(_)
-            | WindowEvent::MousePressed(_)
-            | WindowEvent::MouseReleased(_)
-            | WindowEvent::MouseEntered
-            | WindowEvent::MouseExited => {
+            WindowEvent::MouseMoved(vec) => {
+                update_last_mouse_point(vec.x, vec.y);
+            }
+            WindowEvent::MousePressed(_) | WindowEvent::MouseReleased(_) => {
                 let mut sender = self.sender.lock().unwrap();
                 sender.send_event(event);
             }
