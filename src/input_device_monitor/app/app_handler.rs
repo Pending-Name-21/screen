@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use nannou::event::WindowEvent;
 
-use crate::input_device_monitor::event_caster::clone_caster::clone_caster::CloneCaster;
+use crate::input_device_monitor::event_caster::flatbuffer_caster::flatbuffer_caster::FlatBufferCaster;
 use crate::input_device_monitor::event_handler::concrete::KeyboardEventHandler;
 use crate::input_device_monitor::event_handler::concrete::MouseEventHandler;
 use crate::input_device_monitor::event_handler::AEventHandler;
@@ -23,7 +23,7 @@ impl AppHandler {
     }
 
     pub fn init(&mut self) {
-        let caster = Box::new(CloneCaster);
+        let caster = Box::new(FlatBufferCaster);
         let sender: Arc<Mutex<dyn IEventSender + Send>> = Arc::new(Mutex::new(
             SocketClientSender::new("/tmp/test-events-socket.sock", caster).unwrap(),
         ));

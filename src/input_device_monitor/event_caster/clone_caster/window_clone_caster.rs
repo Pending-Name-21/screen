@@ -5,6 +5,7 @@ impl From<WindowEvent> for MyWindowEvent {
     fn from(event: WindowEvent) -> Self {
         match event {
             WindowEvent::KeyPressed(key) => MyWindowEvent::MyKeyPressed(key.into()),
+            WindowEvent::KeyReleased(key) => MyWindowEvent::MyKeyReleased(key.into()),
             WindowEvent::MouseMoved(vec) => MyWindowEvent::MyMouseMoved(vec.into()),
             WindowEvent::MousePressed(button) => MyWindowEvent::MyMousePressed(button.into()),
             WindowEvent::MouseReleased(button) => MyWindowEvent::MyMouseReleased(button.into()),
