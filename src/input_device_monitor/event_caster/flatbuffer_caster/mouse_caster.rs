@@ -1,9 +1,9 @@
 use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use nannou::event::MouseButton;
 
-use crate::input_device_monitor::my_event::{
-    flatbuffer::{Mouse, MouseArgs, Position, PositionArgs},
-    serializable_clone::get_last_mouse_point,
+use crate::input_device_monitor::{
+    event_handler::mouse_moved::get_last_mouse_point,
+    my_event::flatbuffer::{Mouse, MouseArgs, Position, PositionArgs},
 };
 
 pub fn mouse_as_flatbuffer<'a>(
