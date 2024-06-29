@@ -10,6 +10,7 @@ use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
 pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
+
 pub struct SocketClientSender {
     stream: UnixStream,
     caster: Box<dyn IEventCaster + Send>,
@@ -53,6 +54,8 @@ mod tests {
     use tempfile::TempDir;
 
     use crate::input_device_monitor::event_caster::clone_caster::clone_caster::CloneCaster;
+    use crate::input_device_monitor::event_caster::flatbuffer_caster::flatbuffer_caster::FlatBufferCaster;
+    use crate::input_device_monitor::my_event::flatbuffer::Event;
     use crate::input_device_monitor::my_event::serializable_clone::MyKey;
     use crate::input_device_monitor::my_event::serializable_clone::MyWindowEvent;
 
@@ -107,4 +110,54 @@ mod tests {
         running.store(false, Ordering::SeqCst);
         handle.join().unwrap();
     }
+
+
+    #[test]
+    fn test_socket_client_sender_with_flatbuffer_caster() {
+        let temp_dir = TempDir::new().unwrap();
+        let socket_path = temp_dir.path().join("test.sock");
+        let socket_path_str = socket_path.to_str().unwrap();
+
+        let listener = UnixListener::bind(socket_path_str).unwrap();
+        let running = Arc::new(AtomicBool::new(true));
+        let running_clone = running.clone();
+
+        let handle = thread::spawn(move || {
+            while running_clone.load(Ordering::SeqCst) {
+                match listener.accept() {
+                    Ok((mut socket, _)) => {
+                        let mut buf = [0; 1024];
+                        loop {
+                            match socket.read(&mut buf) {
+                                Ok(0) => break,
+                                Ok(n) => {
+                                    let event = flatbuffers::root::<Event>(&buf[..n]).unwrap();
+                                    match event.keyboard() {
+                                        Some(keyboard_event) => {
+                                            assert_eq!(keyboard_event.key().unwrap(), "A");
+                                            assert_eq!(keyboard_event.type_().unwrap(), "KeyPressed");
+                                        }
+                                        None => panic!("No keyboard event received"),
+                                    }
+                                    break;
+                                }
+                                Err(_) => break,
+                            }
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+        });
+
+        let caster = Box::new(FlatBufferCaster);
+        let mut client_sender = SocketClientSender::new(socket_path_str, caster).unwrap();
+
+        let test_event = WindowEvent::KeyPressed(Key::A);
+        client_sender.send_event(&test_event);
+
+        running.store(false, Ordering::SeqCst);
+        handle.join().unwrap();
+    }
+
 }
