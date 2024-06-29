@@ -5,6 +5,7 @@ use std::io::Write;
 use std::os::unix::net::UnixStream;
 
 use crate::input_device_monitor::event_caster::IEventCaster;
+use crate::input_device_monitor::my_event::event_type::event_type::EventType;
 use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
@@ -39,8 +40,9 @@ impl IEventSender for SocketClientSender {
     fn send_event(&mut self, event: &WindowEvent) {
         let buf = self.caster.cast_event(event);
         self.stream.write_all(&buf).unwrap();
+        let event_type: EventType = event.clone().into();
         run_in_terminal(|| {
-            println!("{}", "✓ Sent".bold().green());
+            println!("{} : {}", "✓ Sent".bold().green(), event_type);
         });
     }
 }
