@@ -50,11 +50,10 @@ mod tests {
         let update_thread = thread::spawn(|| {
             update_last_mouse_point(5.0, 10.0);
         });
+        update_thread.join().unwrap();
 
         let updated_point = get_last_mouse_point();
         assert_eq!(updated_point.x, 5.0);
         assert_eq!(updated_point.y, 10.0);
-
-        update_thread.join().unwrap();
     }
 }

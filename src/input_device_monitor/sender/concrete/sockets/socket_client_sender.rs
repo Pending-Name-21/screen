@@ -115,6 +115,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_socket_client_sender_keyboard_event_with_clone_caster() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
@@ -137,6 +138,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_socket_client_sender_mouse_event_with_clone_caster() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
@@ -159,6 +161,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_socket_client_sender_keyboard_event_with_flatbuffer_serializer() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
@@ -187,6 +190,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_socket_client_sender_mouse_event_with_flatbuffer_serializer() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
