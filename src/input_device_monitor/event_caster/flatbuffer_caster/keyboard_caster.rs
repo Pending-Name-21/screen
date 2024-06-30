@@ -21,3 +21,36 @@ pub fn keyboard_as_flatbuffer<'a>(
 
     keyboard_event
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::input_device_monitor::{
+        event_caster::flatbuffer_caster::keyboard_as_flatbuffer,
+        my_event::flatbuffer::{Keyboard, KeyboardArgs},
+    };
+
+    use nannou::event::Key;
+
+    #[test]
+    fn test_keyboard_as_flatbuffer() {
+        let mut builder_one = flatbuffers::FlatBufferBuilder::with_capacity(1024);
+        let mut builder_two = flatbuffers::FlatBufferBuilder::with_capacity(1024);
+
+        let initial_key = Key::A;
+
+        let event_state = builder_one.create_string("KeyPressed");
+        let key_name = builder_one.create_string(&format!("{:?}", initial_key));
+
+        let expected_keyboard_event = Keyboard::create(
+            &mut builder_one,
+            &KeyboardArgs {
+                type_: Some(event_state),
+                key: Some(key_name),
+            },
+        );
+
+        let result = keyboard_as_flatbuffer(&mut builder_two, "KeyPressed", &initial_key);
+
+        assert_eq!(expected_keyboard_event, result);
+    }
+}
