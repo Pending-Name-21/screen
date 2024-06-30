@@ -1,25 +1,27 @@
 use colored::Colorize;
 use dotenv_codegen::dotenv;
-use nannou::event::WindowEvent;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
-use crate::input_device_monitor::event_caster::IEventBytesCaster;
+use crate::input_device_monitor::event_caster::abstractions::IEventSerializer;
 use crate::input_device_monitor::my_event::event_type::event_type::EventType;
-use crate::input_device_monitor::sender::IEventSender;
+use crate::input_device_monitor::sender::abstractions::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
 
 pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
 
-pub struct SocketClientSender {
+pub struct SocketClientSender<T> {
     stream: UnixStream,
-    caster: Box<dyn IEventBytesCaster + Send>,
+    serializer: Box<dyn IEventSerializer<T> + Send>,
 }
 
-impl SocketClientSender {
-    pub fn new(socket_path: &str, caster: Box<dyn IEventBytesCaster>) -> std::io::Result<Self> {
+impl<T> SocketClientSender<T> {
+    pub fn new(
+        socket_path: &str,
+        serializer: Box<dyn IEventSerializer<T>>,
+    ) -> std::io::Result<Self> {
         match UnixStream::connect(socket_path) {
-            Ok(stream) => Ok(Self { stream, caster }),
+            Ok(stream) => Ok(Self { stream, serializer }),
             Err(err) => {
                 run_in_terminal_or_not(
                     || {
@@ -37,21 +39,20 @@ impl SocketClientSender {
     }
 }
 
-impl IEventSender for SocketClientSender {
-    fn send_event(&mut self, event: &WindowEvent) {
-        let buf = self.caster.cast_event(event);
+impl<T> IEventSender<T> for SocketClientSender<T> {
+    fn send_event(&mut self, event: &T, type_event: &EventType) {
+        let buf = self.serializer.serialize_event(event);
         self.stream.write_all(&buf).unwrap();
-        let event_type: EventType = event.clone().into();
         run_in_terminal(|| {
-            println!("{} : {}", "✓ Sent".bold().green(), event_type);
+            println!("{} {}", "✓ Sent".bold().green(), type_event);
         });
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::input_device_monitor::event_caster::clone_caster::event_clone_bytes_caster::EventCloneBytesCaster;
-    use crate::input_device_monitor::event_caster::flatbuffer_caster::flatbuffer_event_bytes_caster::FlatBufferEventBytesCaster;
+    use crate::input_device_monitor::event_caster::concrete::clone_caster::clone_event_serializer::CloneEventSerializer;
+    use crate::input_device_monitor::event_caster::concrete::flatbuffer_caster::flatbuffer_event_serializer::FlatBufferEventSerializer;
     use crate::input_device_monitor::my_event::flatbuffer::Event;
     use crate::input_device_monitor::my_event::serializable_clone::{
         MyKey, MyMouseButton, MyWindowEvent,
@@ -81,7 +82,7 @@ mod tests {
             while running_clone.load(Ordering::SeqCst) {
                 match listener.accept() {
                     Ok((mut socket, _)) => {
-                        let mut buf = [0; 1024];
+                        let mut buf = [0; 4096]; // Aumentar el tamaño del buffer
                         loop {
                             match socket.read(&mut buf) {
                                 Ok(0) => break,
@@ -89,21 +90,27 @@ mod tests {
                                     handle_event(&buf[..n]);
                                     break;
                                 }
-                                Err(_) => break,
+                                Err(e) => {
+                                    eprintln!("Error reading from socket: {:?}", e);
+                                    break;
+                                }
                             }
                         }
                     }
-                    Err(_) => {}
+                    Err(e) => {
+                        eprintln!("Error accepting connection: {:?}", e);
+                    }
                 }
             }
+            eprintln!("Listener thread exiting");
         });
         (running, handle)
     }
 
     fn create_client_sender(
         socket_path_str: &str,
-        caster: Box<dyn IEventBytesCaster + Send>,
-    ) -> SocketClientSender {
+        caster: Box<dyn IEventSerializer<WindowEvent> + Send>,
+    ) -> SocketClientSender<WindowEvent> {
         SocketClientSender::new(socket_path_str, caster).unwrap()
     }
 
@@ -119,11 +126,11 @@ mod tests {
             assert_eq!(event, MyWindowEvent::MyKeyPressed(MyKey::MyA));
         });
 
-        let caster = Box::new(EventCloneBytesCaster);
-        let mut client_sender = create_client_sender(socket_path_str, caster);
+        let serializer = Box::new(CloneEventSerializer);
+        let mut client_sender = create_client_sender(socket_path_str, serializer);
 
         let test_event = WindowEvent::KeyPressed(Key::A);
-        client_sender.send_event(&test_event);
+        client_sender.send_event(&test_event, &EventType::KeyPressed);
 
         running.store(false, Ordering::SeqCst);
         handle.join().unwrap();
@@ -141,18 +148,18 @@ mod tests {
             assert_eq!(event, MyWindowEvent::MyMousePressed(MyMouseButton::MyLeft));
         });
 
-        let caster = Box::new(EventCloneBytesCaster);
-        let mut client_sender = create_client_sender(socket_path_str, caster);
+        let serializer = Box::new(CloneEventSerializer);
+        let mut client_sender = create_client_sender(socket_path_str, serializer);
 
         let test_event = WindowEvent::MousePressed(MouseButton::Left);
-        client_sender.send_event(&test_event);
+        client_sender.send_event(&test_event, &EventType::MouseButtonPressed);
 
         running.store(false, Ordering::SeqCst);
         handle.join().unwrap();
     }
 
     #[test]
-    fn test_socket_client_sender_keyboard_event_with_flatbuffer_caster() {
+    fn test_socket_client_sender_keyboard_event_with_flatbuffer_serializer() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
         let socket_path_str = socket_path.to_str().unwrap();
@@ -168,18 +175,19 @@ mod tests {
             }
         });
 
-        let caster = Box::new(FlatBufferEventBytesCaster);
-        let mut client_sender = create_client_sender(socket_path_str, caster);
+        let serializer = Box::new(FlatBufferEventSerializer);
+        let mut client_sender = create_client_sender(socket_path_str, serializer);
 
         let test_event = WindowEvent::KeyPressed(Key::A);
-        client_sender.send_event(&test_event);
+        client_sender.send_event(&test_event, &EventType::KeyPressed);
 
         running.store(false, Ordering::SeqCst);
         handle.join().unwrap();
+        eprintln!("Test completed successfully");
     }
 
     #[test]
-    fn test_socket_client_sender_mouse_event_with_flatbuffer_caster() {
+    fn test_socket_client_sender_mouse_event_with_flatbuffer_serializer() {
         let temp_dir = TempDir::new().unwrap();
         let socket_path = temp_dir.path().join("test.sock");
         let socket_path_str = socket_path.to_str().unwrap();
@@ -195,11 +203,11 @@ mod tests {
             }
         });
 
-        let caster = Box::new(FlatBufferEventBytesCaster);
-        let mut client_sender = create_client_sender(socket_path_str, caster);
+        let serializer = Box::new(FlatBufferEventSerializer);
+        let mut client_sender = create_client_sender(socket_path_str, serializer);
 
         let test_event = WindowEvent::MousePressed(MouseButton::Left);
-        client_sender.send_event(&test_event);
+        client_sender.send_event(&test_event, &EventType::MouseButtonPressed);
 
         running.store(false, Ordering::SeqCst);
         handle.join().unwrap();

@@ -1,7 +1,7 @@
 // This main file need to be updated on UI manager US
 use nannou::prelude::*;
 use screen::gui::sprite::sprite_manager::SpriteList;
-use screen::input_device_monitor::app::AppHandler;
+use screen::input_device_monitor::app::{init_event_window_app_handler, AppHandler};
 
 extern crate dotenv_codegen;
 
@@ -18,8 +18,7 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    let mut app_handler = AppHandler::new();
-    app_handler.init();
+    let app_handler = init_event_window_app_handler();
 
     let mut sprite_list = SpriteList::new();
     sprite_list.add_sprite(app, "assets/images/pacman.jpeg", "pacman1", 50.0, 50.0);
@@ -71,6 +70,6 @@ fn view(app: &App, model: &Model, frame: Frame) {
 }
 
 struct Model {
-    app_handler: AppHandler,
+    app_handler: AppHandler<WindowEvent>,
     sprite_list: SpriteList,
 }

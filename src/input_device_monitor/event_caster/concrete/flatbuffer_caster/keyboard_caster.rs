@@ -24,12 +24,13 @@ pub fn keyboard_as_flatbuffer<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::input_device_monitor::{
-        event_caster::flatbuffer_caster::keyboard_as_flatbuffer,
-        my_event::flatbuffer::{Keyboard, KeyboardArgs},
-    };
 
     use nannou::event::Key;
+
+    use crate::input_device_monitor::{
+        event_caster::concrete::flatbuffer_caster::keyboard_as_flatbuffer,
+        my_event::flatbuffer::{Keyboard, KeyboardArgs},
+    };
 
     #[test]
     fn test_keyboard_as_flatbuffer() {

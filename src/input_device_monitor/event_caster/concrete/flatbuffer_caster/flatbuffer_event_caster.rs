@@ -66,8 +66,13 @@ mod tests {
     use nannou::event::{Key, MouseButton};
 
     use crate::input_device_monitor::{
-        event_caster::flatbuffer_caster::{flatbuffer_event_caster::mouse_event_as_flatbuffer, keyboard_as_flatbuffer, mouse_as_flatbuffer},
-        my_event::flatbuffer::{Event, EventArgs, Keyboard, KeyboardArgs, Mouse, MouseArgs, Position, PositionArgs},
+        event_caster::concrete::flatbuffer_caster::{
+            flatbuffer_event_caster::mouse_event_as_flatbuffer, keyboard_as_flatbuffer,
+            mouse_as_flatbuffer,
+        },
+        my_event::flatbuffer::{
+            Event, EventArgs, Keyboard, KeyboardArgs, Mouse, MouseArgs, Position, PositionArgs,
+        },
     };
 
     use super::keyboard_event_as_flatbuffer;
@@ -132,7 +137,8 @@ mod tests {
             },
         );
 
-        let keyboard_event = mouse_as_flatbuffer(&mut builder_two, "MousePressed", &initial_mouse_button);
+        let keyboard_event =
+            mouse_as_flatbuffer(&mut builder_two, "MousePressed", &initial_mouse_button);
         let result = mouse_event_as_flatbuffer(&mut builder_two, keyboard_event);
 
         assert_eq!(expected_event, result);
