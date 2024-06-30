@@ -12,3 +12,22 @@ impl IEventBytesCaster for EventCloneBytesCaster {
         buf
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::EventCloneBytesCaster;
+    use crate::input_device_monitor::event_caster::IEventBytesCaster;
+    use nannou::event::{MouseButton, WindowEvent};
+
+    #[test]
+    fn test_event_as_bytes() {
+        let initial_event = WindowEvent::MousePressed(MouseButton::Left);
+        let caster = EventCloneBytesCaster;
+        let buf = caster.cast_event(&initial_event);
+        let expected_buf = vec![
+            123, 34, 77, 121, 77, 111, 117, 115, 101, 80, 114, 101, 115, 115, 101, 100, 34, 58, 34,
+            77, 121, 76, 101, 102, 116, 34, 125,
+        ];
+        assert_eq!(expected_buf, buf);
+    }
+}

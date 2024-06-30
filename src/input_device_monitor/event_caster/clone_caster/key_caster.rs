@@ -170,3 +170,18 @@ impl From<Key> for MyKey {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use nannou::event::Key;
+    use crate::input_device_monitor::my_event::serializable_clone::MyKey;
+
+    #[test]
+    fn test_key_as_my_key() {
+        let initial_key = Key::A;
+        let expected_my_key = MyKey::MyA;
+
+        let result:MyKey = initial_key.into();
+        assert_eq!(expected_my_key, result);
+    }
+}
