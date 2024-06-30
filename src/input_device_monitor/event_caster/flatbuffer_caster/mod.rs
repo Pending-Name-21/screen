@@ -1,5 +1,5 @@
 pub mod flatbuffer_event_caster;
-pub mod flatbuffer_caster;
+pub mod flatbuffer_event_bytes_caster;
 pub mod keyboard_caster;
 pub mod mouse_caster;
 

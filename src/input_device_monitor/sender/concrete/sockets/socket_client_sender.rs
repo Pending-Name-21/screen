@@ -4,7 +4,7 @@ use nannou::event::WindowEvent;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 
-use crate::input_device_monitor::event_caster::IEventCaster;
+use crate::input_device_monitor::event_caster::IEventBytesCaster;
 use crate::input_device_monitor::my_event::event_type::event_type::EventType;
 use crate::input_device_monitor::sender::IEventSender;
 use crate::log_handler::{run_in_terminal, run_in_terminal_or_not};
@@ -13,11 +13,11 @@ pub const SOCKET_SERVER_PATH: &str = dotenv!("SOCKET_SERVER_PATH");
 
 pub struct SocketClientSender {
     stream: UnixStream,
-    caster: Box<dyn IEventCaster + Send>,
+    caster: Box<dyn IEventBytesCaster + Send>,
 }
 
 impl SocketClientSender {
-    pub fn new(socket_path: &str, caster: Box<dyn IEventCaster>) -> std::io::Result<Self> {
+    pub fn new(socket_path: &str, caster: Box<dyn IEventBytesCaster>) -> std::io::Result<Self> {
         match UnixStream::connect(socket_path) {
             Ok(stream) => Ok(Self { stream, caster }),
             Err(err) => {
@@ -50,8 +50,8 @@ impl IEventSender for SocketClientSender {
 
 #[cfg(test)]
 mod tests {
-    use crate::input_device_monitor::event_caster::clone_caster::clone_caster::CloneCaster;
-    use crate::input_device_monitor::event_caster::flatbuffer_caster::flatbuffer_caster::FlatBufferCaster;
+    use crate::input_device_monitor::event_caster::clone_caster::event_clone_bytes_caster::EventCloneBytesCaster;
+    use crate::input_device_monitor::event_caster::flatbuffer_caster::flatbuffer_event_bytes_caster::FlatBufferEventBytesCaster;
     use crate::input_device_monitor::my_event::flatbuffer::Event;
     use crate::input_device_monitor::my_event::serializable_clone::{
         MyKey, MyMouseButton, MyWindowEvent,
@@ -102,7 +102,7 @@ mod tests {
 
     fn create_client_sender(
         socket_path_str: &str,
-        caster: Box<dyn IEventCaster + Send>,
+        caster: Box<dyn IEventBytesCaster + Send>,
     ) -> SocketClientSender {
         SocketClientSender::new(socket_path_str, caster).unwrap()
     }
@@ -119,7 +119,7 @@ mod tests {
             assert_eq!(event, MyWindowEvent::MyKeyPressed(MyKey::MyA));
         });
 
-        let caster = Box::new(CloneCaster);
+        let caster = Box::new(EventCloneBytesCaster);
         let mut client_sender = create_client_sender(socket_path_str, caster);
 
         let test_event = WindowEvent::KeyPressed(Key::A);
@@ -141,7 +141,7 @@ mod tests {
             assert_eq!(event, MyWindowEvent::MyMousePressed(MyMouseButton::MyLeft));
         });
 
-        let caster = Box::new(CloneCaster);
+        let caster = Box::new(EventCloneBytesCaster);
         let mut client_sender = create_client_sender(socket_path_str, caster);
 
         let test_event = WindowEvent::MousePressed(MouseButton::Left);
@@ -168,7 +168,7 @@ mod tests {
             }
         });
 
-        let caster = Box::new(FlatBufferCaster);
+        let caster = Box::new(FlatBufferEventBytesCaster);
         let mut client_sender = create_client_sender(socket_path_str, caster);
 
         let test_event = WindowEvent::KeyPressed(Key::A);
@@ -195,7 +195,7 @@ mod tests {
             }
         });
 
-        let caster = Box::new(FlatBufferCaster);
+        let caster = Box::new(FlatBufferEventBytesCaster);
         let mut client_sender = create_client_sender(socket_path_str, caster);
 
         let test_event = WindowEvent::MousePressed(MouseButton::Left);
