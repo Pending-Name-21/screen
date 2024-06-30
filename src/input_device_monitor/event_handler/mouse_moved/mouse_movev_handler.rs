@@ -19,3 +19,42 @@ pub fn get_last_mouse_point() -> MyVec2 {
         y: global_vec.y,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::thread;
+
+    use super::*;
+
+    #[test]
+    fn test_update_last_mouse_point_in_another_scope() {
+        let initial_point = get_last_mouse_point();
+        assert_eq!(initial_point.x, 0.0);
+        assert_eq!(initial_point.y, 0.0);
+
+        {
+            update_last_mouse_point(5.0, 10.0);
+        }
+
+        let updated_point = get_last_mouse_point();
+        assert_eq!(updated_point.x, 5.0);
+        assert_eq!(updated_point.y, 10.0);
+    }
+
+    #[test]
+    fn test_update_last_mouse_point_concurrently() {
+        let initial_point = get_last_mouse_point();
+        assert_eq!(initial_point.x, 0.0);
+        assert_eq!(initial_point.y, 0.0);
+
+        let update_thread = thread::spawn(|| {
+            update_last_mouse_point(5.0, 10.0);
+        });
+
+        let updated_point = get_last_mouse_point();
+        assert_eq!(updated_point.x, 5.0);
+        assert_eq!(updated_point.y, 10.0);
+
+        update_thread.join().unwrap();
+    }
+}
