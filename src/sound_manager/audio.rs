@@ -8,6 +8,7 @@ use std::time::Duration;
 use rand::seq::SliceRandom;
 use std::env;
 
+#[derive(Clone)]
 pub struct Audio {
     pub sink: Arc<Mutex<Sink>>,
 }
