@@ -40,5 +40,3 @@ Those are Nannou depedencies, you can find more information [here](https://www.g
 From here you can use cargo to either build `cargo build` or run `cargo run` you can find more information here:
 
 [Building and Running a Cargo Project](https://doc.rust-lang.org/book/ch01-03-hello-cargo.html?highlight=cargo%20build#building-and-running-a-cargo-project)
-
-
