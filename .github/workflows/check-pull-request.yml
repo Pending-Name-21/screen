@@ -3,7 +3,7 @@ name: Pull Request - Rust CI with Cargo
 on:
   pull_request:
     branches:
-      - develop
+      - develop  
 
 jobs:
   build:
@@ -41,4 +41,3 @@ jobs:
 
       - name: Run Tests using Cargo
         run: cargo test
-        

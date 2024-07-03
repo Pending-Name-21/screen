@@ -3,7 +3,7 @@ name: Push - Rust CI with Cargo
 on:
   push:
     branches:
-      - develop
+      - develop    
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
           profile: minimal
           toolchain: stable
 
-      - name: Cache Cargo Dependencies
+      - name: Set Up Cache for Cargo Dependencies
         uses: actions/cache@v3
         with: 
           path: |
