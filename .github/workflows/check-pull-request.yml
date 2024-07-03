@@ -26,7 +26,7 @@ jobs:
           toolchain: stable
 
       - name: Build using Cargo
-        run: cargo build
+        run: cargo build --release
 
   test:
     name: Test
