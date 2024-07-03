@@ -1,10 +1,7 @@
 use crate::socket_server::frame::{Frame, Sound, Coord, Size, Sprite};
-use crate::coffee_time::output::frame::frame_generated::coffee_time::output::frame::root_as_frame;
+use crate::coffee_time::output::frame::frame_generated::coffee_time::output::frame::{root_as_frame, Frame as FlatFrame};
 
-pub fn deserialize_frame(buffer: &[u8]) -> Result<Frame, String> {
-    let flat_frame = root_as_frame(buffer)
-        .map_err(|e| format!("Failed to get root as Frame: {:?}", e))?;
-
+pub fn deserialize_frame(flat_frame:FlatFrame) -> Result<Frame, String> {
     let sounds = flat_frame.sounds().ok_or_else(|| "No sounds found".to_string())?;
     let sounds_vec: Vec<Sound> = sounds.iter().map(|sound| Sound {
         can_play: sound.can_play(),

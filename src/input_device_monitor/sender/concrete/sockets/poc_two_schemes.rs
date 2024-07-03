@@ -62,7 +62,8 @@ mod tests {
     use nannou::event::{Key, WindowEvent};
     use tempfile::TempDir;
 
-    use crate::coffee_time::output::label::label_generated::coffee_time::output::label::Label;
+    use crate::coffee_time::output::label::label_generated::coffee_time::output::label::{root_as_label, Label};
+    use crate::input_device_monitor::my_event::flatbuffer::flatbuffers_events::coffee_time::input_events::root_as_event;
     use crate::input_device_monitor::{
         event_caster::{
             abstractions::IEventSerializer,
@@ -93,7 +94,7 @@ mod tests {
                             match socket.read(&mut buf) {
                                 Ok(0) => break,
                                 Ok(n) => {
-                                    if let Ok(event) = flatbuffers::root::<Event>(&buf[..n]) {
+                                    if let Ok(event) = root_as_event(&buf[..n]) {
                                         match event.keyboard() {
                                             Some(keyboard_event) => {
                                                 assert_eq!(keyboard_event.key().unwrap(), "A");
@@ -104,7 +105,7 @@ mod tests {
                                             }
                                             None => {
                                                 if let Ok(label) =
-                                                    flatbuffers::root::<Label>(&buf[..n])
+                                                    root_as_label(&buf[..n])
                                                 {
                                                     assert_eq!(label.text().unwrap(), "Test Label");
                                                     assert_eq!(label.color().unwrap(), "Red");
