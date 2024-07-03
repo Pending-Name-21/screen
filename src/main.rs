@@ -1,13 +1,13 @@
+use crossbeam_channel::unbounded;
 use nannou::prelude::*;
+use rayon::ThreadPoolBuilder;
 use screen::gui::sprite::sprite_manager::SpriteList;
-use screen::input_device_monitor::app::AppHandler;
+use screen::input_device_monitor::app::{init_event_window_app_handler, AppHandler};
+use screen::socket_server::queue_manager::process_frame;
+use screen::socket_server::receiver::FrameReceiver;
 use screen::socket_server::server::run_server;
 use screen::sound_manager::audio::Audio;
-use crossbeam_channel::unbounded;
-use rayon::ThreadPoolBuilder;
 use std::sync::Arc;
-use screen::socket_server::receiver::FrameReceiver;
-use screen::socket_server::queue_manager::process_frame;
 
 extern crate dotenv_codegen;
 
@@ -16,7 +16,7 @@ fn main() {
 }
 
 struct Model {
-    app_handler: AppHandler,
+    app_handler: AppHandler<WindowEvent>,
     sprite_list: SpriteList,
     frame_receiver: FrameReceiver,
     audio: Arc<Audio>,
@@ -25,7 +25,8 @@ struct Model {
 
 fn model(app: &App) -> Model {
     let (tx, rx) = unbounded();
-    let thread_pool: Arc<rayon::ThreadPool> = Arc::new(ThreadPoolBuilder::new().num_threads(8).build().unwrap());
+    let thread_pool: Arc<rayon::ThreadPool> =
+        Arc::new(ThreadPoolBuilder::new().num_threads(8).build().unwrap());
 
     let server_thread_pool = Arc::clone(&thread_pool);
     std::thread::spawn(move || {
@@ -40,8 +41,7 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
 
-    let mut app_handler = AppHandler::new();
-    app_handler.init();
+    let app_handler = init_event_window_app_handler();
 
     let sprite_list = SpriteList::new();
     let audio = Arc::new(Audio::new());
@@ -60,7 +60,13 @@ fn update(app: &App, model: &mut Model, _update: Update) {
     model.frame_receiver.receive_frames();
 
     if let Some(frame) = model.frame_receiver.get_next_frame() {
-        process_frame(app, &mut model.sprite_list, &model.audio, &model.thread_pool, frame);
+        process_frame(
+            app,
+            &mut model.sprite_list,
+            &model.audio,
+            &model.thread_pool,
+            frame,
+        );
     }
 }
 

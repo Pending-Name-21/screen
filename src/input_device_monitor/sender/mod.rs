@@ -1,4 +1,2 @@
-pub mod sender;
+pub mod abstractions;
 pub mod concrete;
-
-pub use sender::IEventSender;
