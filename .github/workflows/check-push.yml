@@ -25,6 +25,14 @@ jobs:
           profile: minimal
           toolchain: stable
 
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v3
+        with: 
+          path: |
+            ~/.cargo
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}          
+
       - name: Build using Cargo
         run: cargo build
 
