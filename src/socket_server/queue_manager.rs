@@ -15,12 +15,14 @@ pub fn process_frame(app: &App, sprite_list: &mut SpriteList, audio: &Arc<Audio>
 
         match convert_frame_to_gui_sprite(app, frame_sprite) {
             Ok(_gui_sprite) => {
-                sprite_list.add_sprite(
+                sprite_list.add_sprite_dim(
                     app,
                     &frame_sprite.path,
                     key,
                     frame_sprite.position.x as f32,
                     frame_sprite.position.y as f32,
+                    frame_sprite.size.width as f32,
+                    frame_sprite.size.height as f32,
                 );
             }
             Err(e) => {
