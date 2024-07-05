@@ -8,6 +8,8 @@ use screen::socket_server::receiver::FrameReceiver;
 use screen::socket_server::server::run_server;
 use screen::sound_manager::audio::Audio;
 use std::sync::Arc;
+use std::env;
+use dotenv::dotenv;
 
 extern crate dotenv_codegen;
 
@@ -26,7 +28,7 @@ struct Model {
 fn model(app: &App) -> Model {
     let (tx, rx) = unbounded();
     let thread_pool: Arc<rayon::ThreadPool> =
-        Arc::new(ThreadPoolBuilder::new().num_threads(8).build().unwrap());
+        Arc::new(ThreadPoolBuilder::new().num_threads(4).build().unwrap());
 
     let server_thread_pool = Arc::clone(&thread_pool);
     std::thread::spawn(move || {
@@ -76,10 +78,32 @@ fn window_event(app: &App, model: &mut Model, event: WindowEvent) {
 }
 
 fn view(app: &App, model: &Model, frame: nannou::Frame) {
+    dotenv().ok();
+    let selected_cells_path: String = env::var("SELECTED_CELLS_PATH").expect("ADDRESS must be set");
     let draw = app.draw();
     frame.clear(DIMGRAY);
 
+    let mut sprites_specific_path = Vec::new();
+    let mut other_sprites = Vec::new();
+
     for sprite in model.sprite_list.sprites.values() {
+        if sprite.path.starts_with(&selected_cells_path) {
+            sprites_specific_path.push(sprite);
+        } else {
+            other_sprites.push(sprite);
+        }
+    }
+
+    for sprite in sprites_specific_path {
+        let texture = &sprite.texture;
+        let position = sprite.position;
+        let image_size = texture.size();
+        let (width, height) = (image_size[0] as f32, image_size[1] as f32);
+        let dimensions = sprite.dimensions.unwrap_or_else(|| vec2(width, height));
+        draw.texture(texture).xy(position).wh(dimensions);
+    }
+
+    for sprite in other_sprites {
         let texture = &sprite.texture;
         let position = sprite.position;
         let image_size = texture.size();
