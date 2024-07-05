@@ -8,23 +8,22 @@ pub struct SpriteList {
     pub sprites: HashMap<String, Sprite>,
 }
 
-impl SpriteList{
+impl SpriteList {
     pub fn new() -> Self {
         SpriteList {
             sprites: HashMap::new(),
         }
     }
 
-    pub fn add_sprite(&mut self,app: &App, image_file: &str, key_name: &str, pos_x: f32, pos_y: f32 ){
-        let texture = sprite::Sprite::create_texture_from_image(app,&image_file);
-        let sprite = sprite::Sprite::new_sprite( texture, pos_x,pos_y);
+    pub fn add_sprite(&mut self, app: &App, image_file: &str, key_name: &str, pos_x: f32, pos_y: f32) {
+        let texture = sprite::Sprite::create_texture_from_image(app, image_file);
+        let sprite = sprite::Sprite::new_sprite(texture, pos_x, pos_y, image_file.to_string());
         self.sprites.insert(key_name.to_string(), sprite);
-
     }
 
-    pub fn add_sprite_dim(&mut self, app: &App, image_file: &str, key_name: &str, pos_x: f32, pos_y: f32, width: f32, height: f32){
-        let texture = sprite::Sprite::create_texture_from_image(app,&image_file);
-        let sprite_with_size = sprite::Sprite::new_with_size(texture, pos_x, pos_y, width, height);
+    pub fn add_sprite_dim(&mut self, app: &App, image_file: &str, key_name: &str, pos_x: f32, pos_y: f32, width: f32, height: f32) {
+        let texture = sprite::Sprite::create_texture_from_image(app, image_file);
+        let sprite_with_size = sprite::Sprite::new_with_size(texture, pos_x, pos_y, width, height, image_file.to_string());
         self.sprites.insert(key_name.to_string(), sprite_with_size);
     }
 

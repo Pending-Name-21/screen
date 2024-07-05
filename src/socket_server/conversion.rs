@@ -12,6 +12,7 @@ pub fn convert_frame_to_gui_sprite(app: &App, frame_sprite: &FrameSprite) -> Res
                 position: pt2(frame_sprite.position.x as f32, frame_sprite.position.y as f32),
                 texture,
                 dimensions: Some(vec2(frame_sprite.size.width as f32, frame_sprite.size.height as f32)),
+                path: frame_sprite.path.clone(),
             })
         },
         Err(_) => Err(format!("Failed to load image: {}", frame_sprite.path)),
